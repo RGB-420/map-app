@@ -29,9 +29,7 @@ class Streets_db:
             CREATE TABLE IF NOT EXISTS nodes(
                  id_node INTEGER PRIMARY KEY AUTOINCREMENT,
                  id_street INTEGER,
-                 latitude REAL NOT NULL,
-                 longitude REAL NOT NULL,
-                 elevation REAL NOT NULL,
+                 geometry TEXT,
                  FOREIGN KEY (id_street) REFERENCES streets(id_street)
                 )
             ''')
