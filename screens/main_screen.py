@@ -42,9 +42,6 @@ class MainScreen(MDScreen):
 
         self.db = 'db.sql'
 
-        self.street_creator = StreetCreator(map_view=self.map_view, db = self.db, nodes = [], id_street = 0)
-        content.add_widget(self.street_creator)
-
         self.add_button = MDFabButton(icon="plus",on_release=self.on_add_click, on_press=self.disable_map_interaction, pos_hint= {"x": 0.8, "y": 0.1})
         content.add_widget(self.add_button)
         self.dialog = AddPOIDialog(screen_manager=self.screen_manager)
@@ -56,8 +53,6 @@ class MainScreen(MDScreen):
         self.info_street_sheet = None
 
         Clock.schedule_interval(self.update_bottom_sheet_status, 0.1)
-
-        self.draw_streets()
 
         self.update_POI() 
 
@@ -80,9 +75,20 @@ class MainScreen(MDScreen):
         if self.dialog._is_open:
             return
         
-        id_rated_street = self.street_creator.near_street(touch.x, touch.y)
-        if id_rated_street:
-            self.show_info_street_sheet(id_rated_street)
+        lat, lon = self.map_view.get_latlon_at(touch.x, touch.y)
+        point = Point(lon, lat)
+
+        con = sqlite3.connect("db.sql")
+        cursor = con.cursor()
+        cursor.execute("SELECT id_street, geometry FROM nodes")
+        for id_street, geometry_wkt in cursor.fetchall():
+            geometry = loads(geometry_wkt)
+            if isinstance(geometry, LineString) and geometry.distance(point) < 0.0001:
+                self.show_info_street_sheet(id_street)
+                con.close()
+                return
+            
+        con.close()
     
     def show_info_street_sheet(self,id_street):    
         if self.info_street_sheet:
@@ -93,38 +99,6 @@ class MainScreen(MDScreen):
             self.add_widget(self.info_street_sheet)
 
             self.info_street_sheet.set_state("open")
-
-    def draw_streets(self): 
-        self.add_widget(self.street_creator)
-    
-    def get_street_nodes(self, id_street):
-        conn = sqlite3.connect(self.db)
-        cursor = conn.cursor()
-    
-        cursor.execute('''SELECT latitude, longitude 
-                      FROM nodes
-                        WHERE id_street = ?''',
-                        (id_street,))
-     
-        nodes = cursor.fetchall()
-    
-        conn.close()
-        return nodes
-
-    def get_all_street_ids(self):
-        conn = sqlite3.connect(self.db)
-        cursor = conn.cursor()
-        cursor.execute('SELECT DISTINCT id_street FROM nodes')
-        id_streets = cursor.fetchall()
-        conn.close()
-
-        return [id_street[0] for id_street in id_streets]
-
-    def draw_streets(self, *args):
-        id_streets = self.get_all_street_ids()
-        for id_street in id_streets:
-            nodes = self.get_street_nodes(id_street)
-            self.street_creator.add_street(nodes, id_street)
 
     def map_move(self, touch):
         move = False
