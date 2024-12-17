@@ -10,4 +10,5 @@ PaseoApp is a mobile application designed to explore streets, add points of inte
 ## Data Sources
 - **OpenStreetMap:** The application uses OpenStreetMap data for street information and geographical mapping.
 - **OpenTopoData:** The street data is complemented by OpenTopoData, which provides elevation data for a more accurate map experience.
+- **OSMnx:** Boeing, G. (2024). Modeling and Analyzing Urban Networks and Amenities with OSMnx. Working paper.
 
